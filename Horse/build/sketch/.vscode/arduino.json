@@ -1,8 +1,0 @@
-#line 1 "/Users/corneliuscarl/Downloads/Sound_Meter/.vscode/arduino.json"
-{
-  "board": "arduino:mbed_nano:nano33ble",
-  "port": "/dev/tty.usbmodem11101",
-  "programmer": "cmsis-dap",
-  "sketch": "Sound_Meter.ino",
-  "output": "./build"
-}
