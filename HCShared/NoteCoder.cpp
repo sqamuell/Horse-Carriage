@@ -38,6 +38,5 @@ void NoteCoder::createAudioArray(int frequencies[], int *notes)
 	notes[1] = frequencies[0];
 	notes[2] = frequencies[1];
 	notes[3] = frequencies[2];
-	notes[4] = endMessage;
-	notes[5] = stop;
+	notes[4] = stop;
 }

@@ -41,7 +41,7 @@ DFRobot_Touch_GT911 touch;
 */
 DFRobot_UI ui(&screen, &touch);
 
-#define LENGTH 1000
+#define LENGTH 100
 #define SEGMENT_LENGTH 30
 #define NOTE_DURATION 200
 #define WAIT_TIME 2000
@@ -154,9 +154,9 @@ void play_audio() {
 
   int frequencies[3];
   noteCoder.encodeDirection(frequencies, currentDirection);
-  Serial.println(currentDirection,3);
+  Serial.println(currentDirection, 3);
 
-  int notes[6];
+  int notes[5];
   noteCoder.createAudioArray(frequencies, notes);
 
   for (int thisNote = 0; notes[thisNote] != -1; thisNote++) {
@@ -166,10 +166,27 @@ void play_audio() {
   }
 
   current_index++;
+  delay(WAIT_TIME);
   if (current_index >= directions_length) {
+    int endMessageNotes[] = {
+      noteCoder.startMessage,
+      noteCoder.endMessage,
+      noteCoder.endMessage,
+      noteCoder.endMessage,
+      4096 + (3 * noteCoder.step),
+      4096 + (2 * noteCoder.step),
+      4096 + (1 * noteCoder.step),
+      4096 + (0 * noteCoder.step),
+      noteCoder.endMessage,
+      noteCoder.stop
+    };
+    for (int thisNote = 0; endMessageNotes[thisNote] != -1; thisNote++) {
+      tone(SPEAKER_PIN, endMessageNotes[thisNote]);
+      delay(NOTE_DURATION);
+      noTone(SPEAKER_PIN);
+    }
     is_playing = false;
   }
-  delay(WAIT_TIME);
 }
 
 void get_line_length(int* number_input_lines, int* segmentCount) {

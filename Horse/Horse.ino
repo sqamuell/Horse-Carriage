@@ -16,13 +16,13 @@ int ENB = 10;
 
 float sensorInput[] = { 0.555, 0.235, 0.766 };  // Changed the data type to float
 int iteration = 0;
-float i = 0.0;  // Added decimal point to initialize as a float
-float start_value = 0.0;  // Changed the data type to float
-float end_value = 1.0;  // Changed the data type to float
+float i = 0.0;                // Added decimal point to initialize as a float
+float start_value = 0.0;      // Changed the data type to float
+float end_value = 1.0;        // Changed the data type to float
 float increment_value = 0.1;  // Changed the data type to float
 
-const uint16_t samples = 256; //This value MUST ALWAYS be a power of 2
-const double samplingFrequency = 16000; //Hz, must be less than 10000 due to ADC
+const uint16_t samples = 256;            //This value MUST ALWAYS be a power of 2
+const double samplingFrequency = 16000;  //Hz, must be less than 10000 due to ADC
 
 unsigned int sampling_period_us;
 unsigned long microseconds;
@@ -55,11 +55,11 @@ volatile int samplesRead;
 
 void setup() {
   //sampling_period_us = round(1000000*(1.0/samplingFrequency));
-  sampling_period_us = 1/10000;
+  sampling_period_us = 1 / 10000;
 
   Serial.begin(9600);
   // while (!Serial);
-  
+
   pinMode(in1, OUTPUT);
   pinMode(in2, OUTPUT);
   pinMode(in3, OUTPUT);
@@ -70,7 +70,7 @@ void setup() {
 
   // int *p = &frequencies[0];
   // Serial.println(*p);
-  
+
   //Serial.println(_frequencies[0]);
   //Serial.println(_frequencies[1]);
   //Serial.println(_frequencies[2]);
@@ -80,7 +80,8 @@ void setup() {
   PDM.onReceive(onPDMdata);
   if (!PDM.begin(1, samplingFrequency)) {
     Serial.println("Failed to start PDM!");
-    while (1);
+    while (1)
+      ;
   }
 }
 
@@ -91,19 +92,19 @@ int frequencyIndex = 0;
 void loop() {
   if (samplesRead) {
     microseconds = micros();
-    for(int i=0; i<samples; i++)
-    {
-        vReal[i] = sampleBuffer[i];
-        vImag[i] = 0;
-        while(micros() - microseconds < sampling_period_us){
-          //empty loop
-        }
-        microseconds += sampling_period_us;
+    for (int i = 0; i < samples; i++) {
+      vReal[i] = sampleBuffer[i];
+      vImag[i] = 0;
+      while (micros() - microseconds < sampling_period_us) {
+        //empty loop
+      }
+      microseconds += sampling_period_us;
     }
     FFT = arduinoFFT(vReal, vImag, samples, samplingFrequency);
     FFT.Windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
     FFT.Compute(FFT_FORWARD);
-    FFT.ComplexToMagnitude();;
+    FFT.ComplexToMagnitude();
+    ;
 
 
     double x = FFT.MajorPeak();
@@ -113,46 +114,40 @@ void loop() {
       Serial.println("Start");
       currentIndex = 0;
       frequencyIndex = 0;
-    } else if (roundedPeak == noteCoder.endMessage && currentIndex != -1) {
+    } else if (frequencyIndex >= 3) {
       currentIndex = -1;
-
-
-
-      float direction = noteCoder.decodeDirection(frequencies);
-
-      //Proportion Speed of two wheels based on direction
-      // 0.500 = 167, 167
-      // 0.000 = 80, 255
-      // 1.000 = 255, 80
-
-      double speed1 = 255 - (175 * direction);
-      double speed2 = 80 + (175 * direction);
-      
-      //double speed1 = Helpers::mapf(direction, start_value, end_value, 80, 255); 
-      Serial.print(speed1);
-      Serial.print("|");
-      Serial.println(speed2);
-
-      digitalWrite(in1, HIGH);
-      digitalWrite(in2, LOW);
-      digitalWrite(in3, HIGH);
-      digitalWrite(in4, LOW);
+      frequencyIndex = -1;
+      double speed1;
+      double speed2;
+      if (frequencies[0] == noteCoder.endMessage && frequencies[1] == noteCoder.endMessage && frequencies[2] == noteCoder.endMessage) {
+        speed1 = -1;
+        speed2 = -1;
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, HIGH);
+      } else {
+        float direction = noteCoder.decodeDirection(frequencies);
+        speed1 = Helpers::mapf(direction, start_value, end_value, 80, 255);
+        speed2 = Helpers::mapf(direction, start_value, end_value, 255, 80);
+        Serial.println(direction, 3);
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW);
+      }
 
       analogWrite(ENA, speed1);
       analogWrite(ENB, speed2);
       delay(2000);
-
-
-      Serial.println(direction, 3);
     } else if (currentIndex >= 0) {
-      if (currentIndex % 4 == 0 && currentIndex > 0){
+      if (currentIndex % 4 == 0 && currentIndex > 0) {
         frequencies[frequencyIndex] = roundedPeak;
 
         frequencyIndex++;
       }
-
       currentIndex++;
-    } 
+    }
     samplesRead = 0;
   }
 }
