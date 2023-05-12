@@ -14,7 +14,6 @@ int in4 = 2;
 int ENA = 9;
 int ENB = 10;
 
-float sensorInput[] = { 0.555, 0.235, 0.766 };  // Changed the data type to float
 int iteration = 0;
 float i = 0.0;                // Added decimal point to initialize as a float
 float start_value = 0.0;      // Changed the data type to float
@@ -119,17 +118,26 @@ void loop() {
       frequencyIndex = -1;
       double speed1;
       double speed2;
+
+      Serial.print("Freq: ");
+      Serial.print(frequencies[0]);
+      Serial.print(" | ");
+      Serial.print(frequencies[1]);
+      Serial.print(" | ");
+      Serial.println(frequencies[2]);
+
       if (frequencies[0] == noteCoder.endMessage && frequencies[1] == noteCoder.endMessage && frequencies[2] == noteCoder.endMessage) {
         speed1 = -1;
         speed2 = -1;
-        digitalWrite(in1, HIGH);
-        digitalWrite(in2, HIGH);
-        digitalWrite(in3, HIGH);
-        digitalWrite(in4, HIGH);
+        // digitalWrite(in1, HIGH);
+        // digitalWrite(in2, HIGH);
+        // digitalWrite(in3, HIGH);
+        // digitalWrite(in4, HIGH);
       } else {
-        float direction = noteCoder.decodeDirection(frequencies);
-        speed1 = Helpers::mapf(direction, start_value, end_value, 80, 255);
-        speed2 = Helpers::mapf(direction, start_value, end_value, 255, 80);
+        float direction = max(0, min(noteCoder.decodeDirection(frequencies), 1.0));
+        // if (0 >= direction && direction <= 1.000)
+        speed1 = Helpers::mapf(direction, start_value, end_value, 180, 255);
+        speed2 = Helpers::mapf(direction, start_value, end_value, 255, 180);
         Serial.println(direction, 3);
         digitalWrite(in1, HIGH);
         digitalWrite(in2, LOW);
@@ -139,7 +147,7 @@ void loop() {
 
       analogWrite(ENA, speed1);
       analogWrite(ENB, speed2);
-      delay(2000);
+      delay(100);
     } else if (currentIndex >= 0) {
       if (currentIndex % 4 == 0 && currentIndex > 0) {
         frequencies[frequencyIndex] = roundedPeak;
