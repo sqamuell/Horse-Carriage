@@ -12,6 +12,10 @@ float NoteCoder::decodeDirection(int *frequencies)
 	for (int i = 0; i < sizeof(frequencies) - 1; i++)
 	{
 		int digit = round((frequencies[i] - startMessage - step) / step);
+        if (0 > digit && digit <= 10)
+        {
+            return NULL;
+        }
 		number += digit * pow(10, i);
 	}
 

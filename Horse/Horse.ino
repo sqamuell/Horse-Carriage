@@ -57,7 +57,8 @@ void setup() {
   sampling_period_us = 1 / 10000;
 
   Serial.begin(9600);
-  // while (!Serial);
+  while (!Serial)
+    ;
 
   pinMode(in1, OUTPUT);
   pinMode(in2, OUTPUT);
@@ -104,51 +105,19 @@ void loop() {
     FFT.Compute(FFT_FORWARD);
     FFT.ComplexToMagnitude();
     ;
-
-
     double x = FFT.MajorPeak();
 
     int roundedPeak = floor(x / 128) * 128;
     if (roundedPeak == noteCoder.startMessage && currentIndex == -1) {
+      //start collecting frequencies
       Serial.println("Start");
       currentIndex = 0;
       frequencyIndex = 0;
     } else if (frequencyIndex >= 3) {
-      currentIndex = -1;
-      frequencyIndex = -1;
-      double speed1;
-      double speed2;
-
-      Serial.print("Freq: ");
-      Serial.print(frequencies[0]);
-      Serial.print(" | ");
-      Serial.print(frequencies[1]);
-      Serial.print(" | ");
-      Serial.println(frequencies[2]);
-
-      if (frequencies[0] == noteCoder.endMessage && frequencies[1] == noteCoder.endMessage && frequencies[2] == noteCoder.endMessage) {
-        speed1 = -1;
-        speed2 = -1;
-        // digitalWrite(in1, HIGH);
-        // digitalWrite(in2, HIGH);
-        // digitalWrite(in3, HIGH);
-        // digitalWrite(in4, HIGH);
-      } else {
-        float direction = max(0, min(noteCoder.decodeDirection(frequencies), 1.0));
-        // if (0 >= direction && direction <= 1.000)
-        speed1 = Helpers::mapf(direction, start_value, end_value, 180, 255);
-        speed2 = Helpers::mapf(direction, start_value, end_value, 255, 180);
-        Serial.println(direction, 3);
-        digitalWrite(in1, HIGH);
-        digitalWrite(in2, LOW);
-        digitalWrite(in3, HIGH);
-        digitalWrite(in4, LOW);
-      }
-
-      analogWrite(ENA, speed1);
-      analogWrite(ENB, speed2);
-      delay(100);
+      //execute based on frequencies
+      try_move();
     } else if (currentIndex >= 0) {
+      //collect freqencies
       if (currentIndex % 4 == 0 && currentIndex > 0) {
         frequencies[frequencyIndex] = roundedPeak;
 
@@ -158,6 +127,53 @@ void loop() {
     }
     samplesRead = 0;
   }
+}
+
+void try_move() {
+  currentIndex = -1;
+  frequencyIndex = -1;
+  double speed1;
+  double speed2;
+
+  Serial.print("Freq: ");
+  Serial.print(frequencies[0]);
+  Serial.print(" | ");
+  Serial.print(frequencies[1]);
+  Serial.print(" | ");
+  Serial.println(frequencies[2]);
+
+  if (frequencies[0] == noteCoder.endMessage && frequencies[1] == noteCoder.endMessage && frequencies[2] == noteCoder.endMessage) {
+    speed1 = -1;
+    speed2 = -1;
+    // digitalWrite(in1, HIGH);
+    // digitalWrite(in2, HIGH);
+    // digitalWrite(in3, HIGH);
+    // digitalWrite(in4, HIGH);
+  } else {
+    float direction = max(0, min(noteCoder.decodeDirection(frequencies), 1.0));
+    if (direction == NULL) {
+      Serial.println("Captured environment noise. Filtering...");
+      return;
+    }
+
+    Serial.print("Direction: ");
+    Serial.println(direction);
+    // if (0 >= direction && direction <= 1.000)
+    speed1 = Helpers::mapf(direction, start_value, end_value, 180, 255);
+    speed2 = Helpers::mapf(direction, start_value, end_value, 255, 180);
+    Serial.println(direction, 3);
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+  }
+  Serial.print("speed 1: ");
+  Serial.print(speed1);
+  Serial.print(" - speed 2: ");
+  Serial.println(speed2);
+  analogWrite(ENA, speed1);
+  analogWrite(ENB, speed2);
+  delay(100);
 }
 
 void onPDMdata() {
